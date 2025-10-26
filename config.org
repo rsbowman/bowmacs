@@ -1,0 +1,953 @@
+#+title: Bowmacs Config
+
+* Bowmacs
+The only computing platform by, for, and all about me, Sean Bowman!
+** Notes and references
+https://github.com/positron-solutions/transient-showcase - transient examples
+*** doom package fix
+Had to do this to fix nongnu repo downtime:
+#+begin_src text :tangle no
+diff --git a/lisp/lib/packages.el b/lisp/lib/packages.el
+index 067830c5d..debad23fe 100644
+--- a/lisp/lib/packages.el
++++ b/lisp/lib/packages.el
+@@ -125,10 +125,10 @@ package's name as a symbol, and whose CDR is the plist supplied to its
+               (melpa              :type git :host github
+                                   :repo "melpa/melpa"
+                                   :build nil)
+-              (nongnu-elpa        :type git
+-                                  :repo "https://git.savannah.gnu.org/git/emacs/nongnu.git"
+-                                  :local-repo "nongnu-elpa"
+-                                  :build nil)
++              ;; (nongnu-elpa        :type git
++              ;;                     :repo "https://git.savannah.gnu.org/git/emacs/nongnu.git"
++              ;;                     :local-repo "nongnu-elpa"
++              ;;                     :build nil)
+               (gnu-elpa-mirror    :type git :host github
+                                   :repo "emacs-straight/gnu-elpa-mirror"
+                                   :build nil)
+#+end_src
+** Packages
+#+begin_src elisp :tangle packages.el
+;(package! another-package
+;  :recipe (:host github :repo "username/repo"))
+
+;(package! this-package
+;  :recipe (:host github :repo "username/repo"
+;           :files ("some-file.el" "src/lisp/*.el")))
+
+;(package! builtin-package :disable t)
+
+;(package! builtin-package :recipe (:nonrecursive t))
+;(package! builtin-package-2 :recipe (:repo "myfork/package"))
+;(package! builtin-package :recipe (:branch "develop"))
+;(package! builtin-package :pin "1a2b3c4d5e")
+
+
+;; Doom's packages are pinned to a specific commit and updated from release to
+;; release. The `unpin!' macro allows you to unpin single packages...
+;(unpin! pinned-package)
+;; ...or multiple packages
+;(unpin! pinned-package another-pinned-package)
+;; ...Or *all* packages (NOT RECOMMENDED; will likely break things)
+;(unpin! t)
+
+(package! zenburn-theme)
+(package! gptel)
+(package! lispy)
+(package! lispyville)
+(package! python-black)
+(package! visual-fill-column)
+(package! adaptive-wrap)
+(package! git-link
+  :recipe (:host github :repo "sshaw/git-link"))
+(package! kubel
+  :recipe (:host github :repo "abrochard/kubel"
+           :files ("kubel.el" "kubel-evil.el")))
+(package! numpydoc
+  :recipe (:host github :repo "douglasdavis/numpydoc.el"))
+(package! evil-anzu)
+(package! scala-mode)
+(package! all-the-icons) ; lsp-mode uses some of these
+(package! reformatter
+  :recipe (:host github :repo "purcell/emacs-reformatter"))
+(package! ruff-format
+  :recipe (:host github :repo "scop/emacs-ruff-format"))
+(package! moonbit-mode
+  :recipe (:host github :repo "cxa/moonbit-mode"))
+(package! claude-code
+  :recipe (:host github :repo "stevemolitor/claude-code.el"))
+(package! websocket
+  :recipe (:host github :repo "ahyatt/emacs-websocket"))
+(package! ob-go
+  :recipe (:host github :repo "pope/ob-go"))
+#+end_src
+** Load path
+#+begin_src elisp
+(add-load-path! "elisp")
+#+end_src
+** Appearance
+#+begin_src elisp
+(setq doom-font (font-spec :name "Hack Nerd Font Mono"
+                           :size (if IS-MAC 14 16)
+                           :weight 'normal
+                           :width 'normal))
+
+(setq doom-theme 'zenburn)
+(setq display-line-numbers-type nil) ; 'relative
+
+(defun bowmacs/dashboard-function ()
+  (insert
+   "
+         ██████╗  ██████╗ ██╗    ██╗███╗   ███╗ █████╗  ██████╗███████╗
+         ██╔══██╗██╔═══██╗██║    ██║████╗ ████║██╔══██╗██╔════╝██╔════╝
+         ██████╔╝██║   ██║██║ █╗ ██║██╔████╔██║███████║██║     ███████╗
+         ██╔══██╗██║   ██║██║███╗██║██║╚██╔╝██║██╔══██║██║     ╚════██║
+         ██████╔╝╚██████╔╝╚███╔███╔╝██║ ╚═╝ ██║██║  ██║╚██████╗███████║
+         ╚═════╝  ╚═════╝  ╚══╝╚══╝ ╚═╝     ╚═╝╚═╝  ╚═╝ ╚═════╝╚══════╝
+
+"))
+
+;; see https://github.com/ragone/.doom.d/blob/master/config.org for nice example of customized dashboard
+(setq +doom-dashboard-functions
+      '(bowmacs/dashboard-function
+        doom-dashboard-widget-shortmenu
+        doom-dashboard-widget-loaded
+        doom-dashboard-widget-footer))
+
+(setq frame-title-format "Bowmacs - %b")
+
+;; This is how to change the guide color:
+;; (after! highlight-indent-guides
+;;   (set-face-foreground 'highlight-indent-guides-character-face "dimgray"))
+#+end_src
+
+*** Icons
+lsp-mode seems to use all-the-icons
+#+begin_src elisp
+(use-package! all-the-icons)
+#+end_src
+
+#+end_src
+** Avy
+See https://karthinks.com/software/avy-can-do-anything for great avy tips
+#+begin_src elisp
+(after! avy
+  (setq avy-timeout-seconds 0.25)
+  ;; (setq avy-style 'words)
+  (setq avy-style 'at-full)
+  (defun avy-action-embark (pt)
+    (unwind-protect
+        (save-excursion
+          (goto-char pt)
+          (embark-act))
+      (select-window
+       (cdr (ring-ref avy-ring 0))))
+    t)
+  (setf (alist-get ?. avy-dispatch-alist) 'avy-action-embark))
+#+end_src
+** Evil escape
+#+begin_src elisp
+(after! evil-escape
+  (setq-default evil-escape-key-sequence "jk"
+                evil-escape-delay 0.15
+                evil-escape-unordered-key-sequence t
+                evil-escape-excluded-states nil))
+#+end_src
+** Search, editing, and Emacs config
+#+begin_src elisp
+(setq confirm-kill-emacs nil)
+
+;; Affects `fill-paragraph' among other things.
+(setq sentence-end-double-space t)
+
+;; Don't automatically add a newline at the end of files
+(setq! require-trailing-newline nil)
+(setq! mode-require-trailing-newline nil)
+
+;; Make vim word motions count _ as part of a word
+(add-hook! (text-mode prog-mode js-mode sql-mode)
+  (modify-syntax-entry ?_ "w"))
+
+;; Similary for -
+(add-hook! (clojure-mode scheme-mode emacs-lisp-mode)
+  (modify-syntax-entry ?- "w"))
+
+;; Use hippie-expand for evil-complete-next, C-n in insert mode
+(setq hippie-expand-try-functions-list
+      '(try-expand-dabbrev
+        try-expand-dabbrev-all-buffers
+        try-expand-dabbrev-from-kill
+        try-complete-file-name-partially
+        try-complete-file-name
+        try-expand-all-abbrevs
+        try-expand-list
+        try-expand-line
+        try-complete-lisp-symbol-partially
+        try-complete-lisp-symbol))
+(setq evil-complete-next-func #'hippie-expand)
+
+;; Have hippie-expand/dabbrev respect capitalization, useful for CamelCaps identifiers.
+;; see https://stackoverflow.com/questions/8722301/force-hippie-expand-to-respect-capitalization
+(defadvice hippie-expand (around hippie-expand-case-fold)
+  "Try to do case-sensitive matching (not effective with all functions)."
+  (let ((case-fold-search nil))
+    ad-do-it))
+(ad-activate 'hippie-expand)
+
+(after! hl-todo
+  (add-to-list 'hl-todo-keyword-faces '("RSB" error bold)))
+#+end_src
+
+Anzu should be included from Doom's modeline, but it doesn't seem to be working, so I put it here:
+#+begin_src elisp
+(use-package! anzu)
+
+(use-package! evil-anzu
+  :config (global-anzu-mode +1))
+#+end_src
+*** wgrep
+From https://blog.binchen.org/posts/use-wgrep-and-evil-to-replace-text-efficiently.html
+#+begin_src elisp
+;; Press `dd' to delete lines in `wgrep-mode' in evil directly
+(defadvice evil-delete (around evil-delete-hack activate)
+  ;; make buffer writable
+  (if (and (boundp 'wgrep-prepared) wgrep-prepared)
+      (wgrep-toggle-readonly-area))
+  ad-do-it
+  ;; make buffer read-only
+  (if (and (boundp 'wgrep-prepared) wgrep-prepared)
+      (wgrep-toggle-readonly-area)))
+#+end_src
+*** ace-window
+#+begin_src elisp
+(setq aw-keys '(?a ?s ?d ?f ?g ?w ?e ?r))
+#+end_src
+*** evil-beginning-of-line should go all the way
+Sometimes evil-beginning-of-line doesn't go all the way and leaves a left margin full of left arrows.  Fix that.
+#+begin_src elisp
+(evil-define-motion bowmacs--evil-beginning-of-line ()
+  "Move the cursor to the beginning of the current line."
+  :type exclusive
+  (move-beginning-of-line nil)
+  (set-window-hscroll (selected-window) 0))
+
+(map! :nv "0" #'bowmacs--evil-beginning-of-line)
+#+end_src
+
+*** evil nerd commenter
+To allow toggling of comments line by line, use
+#+begin_src elisp :tangle no
+(setq evilnc-invert-comment-line-by-line t)
+#+end_src
+
+This causes differently indented lines to be commented separately, which isn't great, so it's better to use the evilnc toggle.
+*** monorepo grep
+Search in monorepo by project
+#+begin_src elisp
+(defun bowmacs--monorepo-project-search ()
+  "Search within the current project in the monorepo.
+Determine project root by finding `project.json' file."
+  (interactive)
+  (let* ((file (or buffer-file-name default-directory))
+         (root (locate-dominating-file file "project.json")))
+    (unless root
+      (user-error "Could not find project root with project.json!"))
+    (+vertico-file-search :in root)))
+#+end_src
+** Magit / Git
+#+begin_src elisp
+(defun bowmacs--first-tag-containing-commit ()
+  "Find the oldest tag that contains the commit at point in a Magit buffer."
+  (interactive)
+  (let ((commit (or (magit-branch-or-commit-at-point)
+                    (magit-copy-section-value))))
+    (if commit
+        (let ((tag (car (magit-git-lines "describe" "--tags" "--contains" commit))))
+          (if tag
+              (message "Oldest tag containing %s: %s" commit tag)
+            (message "No tag contains commit %s" commit)))
+      (message "No commit at point!"))))
+
+(after! magit
+  (setq git-commit-style-convention-checks
+        (remove 'overlong-summary-line git-commit-style-convention-checks))
+  (setq magit-copy-revision-abbreviated t)
+  ;; Who knows how to do any of this well.... it's all so disappointing.
+  ;; (set-popup-rule! (rx bos "magit:") :actions '(display-buffer-reuse-window display-buffer-below-selected) :size 0.6)
+  ;; (set-popup-rule! (rx bos (or "magit-diff" "magit-revision"))
+  ;;   :actions '(display-buffer-reuse-window display-buffer-in-previous-window display-buffer-use-some-window))
+
+  ;; (add-to-list 'display-buffer-alist
+  ;;              `(,(rx bos "magit:")
+  ;;                (display-buffer-reuse-window
+  ;;                 display-buffer-below-selected)
+  ;;                (reusable-frames . visible)
+  ;;                (window-height . 0.7)))
+  ;; (add-to-list 'display-buffer-alist
+  ;;              `(,(rx bos (or "magit-diff"
+  ;;                             "magit-revision"))
+  ;;                (display-buffer-reuse-window
+  ;;                 display-buffer-in-previous-window
+  ;;                 display-buffer-use-some-window)
+  ;;                (reusable-frames . visible)))
+  (setq evil-magit-use-z-for-folds nil)
+  (setq magit-list-refs-sortby "-committerdate")
+  (setq magit-log-margin '(t "%m-%d-%Y %H:%M " magit-log-margin-width t 18))
+  (map! :map magit-mode-map
+        :nv "zz" #'magit-stash))
+#+end_src
+*** git-link
+#+begin_src elisp
+(use-package! git-link)
+
+(defun bowmacs-git-link-commit ()
+  (interactive)
+  (let ((current-prefix-arg '(16)))
+    (call-interactively 'git-link)))
+
+(defun bowmacs-git-link-main ()
+  (interactive)
+  (cl-letf (((symbol-function 'git-link--branch)
+             (lambda () "main")))
+    (call-interactively 'git-link)))
+#+end_src
+** AI
+#+begin_src elisp
+(defvar bowmacs-openai-api-key (getenv "OPENAI_API_KEY"))
+(defvar bowmacs-anthropic-api-key (getenv "ANTHROPIC_API_KEY"))
+
+(use-package! gptel
+  :config
+  ;; (setq! gptel-model 'claude-3-7-sonnet-20250219
+  ;;        gptel-backend (gptel-make-anthropic "Claude" :stream t :key bowmacs-anthropic-api-key))
+  (setq! gptel-model "gpt-4.1"
+         gptel-api-key bowmacs-openai-api-key
+         ;gptel-backend (gptel-make-openai "GPT-4o" :stream t :key bowmacs-openai-api-key)
+         )
+  (map! :leader "s g" #'gptel-send))
+#+end_src
+** Programming and other modes
+*** Org
+We want to be able to search in org documents even when headings are folded. See https://github.com/doomemacs/doomemacs/issues/6478
+#+begin_src elisp
+(after! evil
+  (evil-select-search-module 'evil-search-module 'isearch))
+#+end_src
+**** Org notes
+#+begin_src elisp
+(setq bowmacs-org-notes-path "~/dev/notes.org")
+(setq bowmacs-org-todo-path "~/dev/todo.org")
+
+(after! org-capture
+  (setq org-capture-templates
+        '(("t" "todo" entry (file bowmacs-org-notes-path) "* TODO %?")
+          ("n" "note" entry (file bowmacs-org-notes-path) "* %?"))))
+
+(map! :leader
+      :desc "Open notes.org"
+      "n f" (lambda () (interactive) (find-file bowmacs-org-notes-path)))
+
+(map! :leader
+      :desc "Open todo.org"
+      "n t" (lambda () (interactive) (find-file bowmacs-org-todo-path)))
+#+end_src
+
+#+RESULTS:
+: #[nil ((find-file bowmacs-org-notes-path)) nil nil nil nil]
+
+**** ob-go
+Use a ~:dir~ arg pointing to a go project in order to use libraries and so on, something like this at the top of the file:
+~#+PROPERTY: header-args:go :dir ~/dev/ob-go-scratch~
+
+#+begin_src elisp
+(use-package! ob-go)
+#+end_src
+**** ob-python direnv support
+Respect ~.envrc~ files when running Python code in a block where the ~:dir~ has one:
+#+begin_src elisp
+(defun org-babel-refresh-envrc-before-python-block (orig-fun &rest args)
+  (let* ((params (nth 1 args))
+         (dir (cdr (assoc :dir params))))
+    (when dir
+      (let ((default-directory (or (file-name-as-directory dir) default-directory)))
+        (when (fboundp 'envrc--update)
+          (envrc--update))))
+    (apply orig-fun args)))
+
+(advice-add 'org-babel-execute:python :around #'org-babel-refresh-envrc-before-python-block)
+#+end_src
+*** Lispy
+#+begin_src elisp
+(defvar bowmacs/lispy-mode-map (make-sparse-keymap))
+(define-minor-mode bowmacs/lispy-mode
+  "Key bindings for lispy things"
+  :lighter " lispy"
+  :keymap bowmacs/lispy-mode-map)
+
+(defun bowmacs/lispy-quotes (arg)
+  (interactive "P")
+  (if (looking-at "\"")
+      (forward-char)
+    (lispy-quotes arg)))
+
+(use-package! lispy
+  :config
+  (setq lispy-comment-use-single-semicolon t))
+
+(use-package! lispyville
+  :config
+  (lispyville-set-key-theme '(operators
+                              slurp/barf-cp
+                              C-w))
+  (add-hook! (scheme-mode
+              gerbil-mode
+              emacs-lisp-mode
+              clojure-mode
+              cider-repl-mode
+              lisp-mode
+              lisp-interaction-mode
+              geiser-repl-mode
+              hy-mode
+              inferior-hy-mode)
+    (defun bowmacs-lispy-mode ()
+      (bowmacs/lispy-mode 1)
+      (lispyville-mode 1)
+      (lispy-mode -1))))
+
+(map! :map bowmacs/lispy-mode-map
+      (:after lispyville
+       :nv "(" #'lispyville-backward-up-list
+       :nv ")" #'lispyville-up-list
+       :nv "{" #'lispyville-previous-closing
+       :nv "}" #'lispyville-next-closing
+       :nv "[" #'lispyville-previous-opening
+       :nv "]" #'lispyville-next-opening)
+
+      (:after lispy
+       :ie ";"     #'lispy-comment
+       :ie "\""    #'bowmacs/lispy-quotes
+       :ie "("     #'lispy-parens
+       :ie ")"     #'lispy-right-nostring
+       :ie "["     #'lispy-brackets
+       :ie "]"     #'lispy-right-nostring
+       :ie "{"     #'lispy-braces
+       :ie "}"     #'lispy-right-nostring
+       :ie "C-u (" #'lispy-wrap-round
+       :ie "TAB"   #'lispy-indent-adjust-parens
+       :nv "ge"    #'lispy-eval
+       :nv "gE"    #'lispy-eval-and-insert
+       :nv "g/"    #'lispy-splice
+       :nv "ze"    #'lispy-eval-and-replace
+       :nv "zM"    #'lispy-multiline
+       :nv "zO"    #'lispy-oneline
+       :nv "gr"    #'lispy-raise
+       :nv "gC"    #'lispy-convolute
+       :nv "gj"    #'lispy-down
+       :nv "gk"    #'lispy-up
+       :nv "M-j"   #'lispy-move-down
+       :nv "M-k"   #'lispy-move-up))
+#+end_src
+*** C family
+TODO: some of this is still relevant, some isn't; for now don't tangle it
+#+begin_src elisp :tangle no
+(add-to-list 'auto-mode-alist '("\\.mm$" . objc-mode))
+(add-to-list 'auto-mode-alist '("\\.h\\'" . c++-mode))
+
+;; Don't use tabs to indent C/C++.  If this is not set, whitespace-mode
+;; highlights indenting spaces.
+(setq-hook! '(c-mode-hook c++-mode-hook) indent-tabs-mode nil)
+
+(defun bowmacs/arglist-cont-nonempty ()
+  "Non-nil if we're on a line w/ syntactic symbol arglist-cont-nonempty"
+  (let ((elements (mapcar #'car (c-guess-basic-syntax))))
+    (member 'arglist-cont-nonempty elements)))
+
+(defun bowmacs/statement-block-intro (x)
+  "Correctly do it with obj c blocks in arglists"
+  (if (bowmacs/arglist-cont-nonempty)
+      0
+    '+))
+
+(defun bowmacs/block-close (x)
+  "Pair with above to correctly put closing braces of blocks in obj c at the right place"
+  (if (bowmacs/arglist-cont-nonempty)
+      '-
+    0))
+
+(c-add-style
+ "RSB"
+ '("linux"
+   (c-basic-offset . 4)     ; Guessed value
+   (c-block-comment-prefix . "* ")
+   (c-offsets-alist
+    (access-label . -)      ; Guessed value
+    (arglist-cont . 0)      ; Guessed value
+    (arglist-intro . +)     ; Guessed value
+    (block-close . bowmacs/block-close)
+    (brace-entry-open . 0)  ; Guessed value
+    (brace-list-close . 0)  ; Guessed value
+    (brace-list-intro . +)  ; Guessed value
+    (case-label . +)        ; Guessed value
+    (catch-clause . 0)      ; Guessed value
+    (class-close . 0)       ; Guessed value
+    (defun-block-intro . +) ; Guessed value
+    (defun-close . 0)       ; Guessed value
+    (inclass . +)           ; Guessed value
+    (inline-close . 0)      ; Guessed value
+    (innamespace . [0])       ; Guessed value
+    (member-init-cont . 0)  ; Guessed value
+    (member-init-intro . +) ; Guessed value
+    (namespace-close . 0)   ; Guessed value
+    (statement . 0)         ; Guessed value
+    (statement-block-intro . bowmacs/statement-block-intro)
+    (statement-case-intro . +) ; Guessed value
+    (statement-cont . +)       ; Guessed value
+    (stream-op . +)         ; Guessed value
+    (topmost-intro . 0)     ; Guessed value
+    (topmost-intro-cont . 0) ; Guessed value
+    (annotation-top-cont . 0)
+    (annotation-var-cont . +)
+    (arglist-close . c-lineup-close-paren)
+    (arglist-cont-nonempty . c-lineup-arglist)
+    (block-open . 0)
+    (brace-list-entry . 0)
+    (brace-list-open . 0)
+    (c . c-lineup-C-comments)
+    (class-open . 0)
+    (comment-intro . c-lineup-comment)
+    (composition-close . 0)
+    (composition-open . 0)
+    (cpp-define-intro c-lineup-cpp-define +)
+    (cpp-macro . -1000)
+    (cpp-macro-cont . +)
+    (defun-open . 0)
+    (do-while-closure . 0)
+    (else-clause . 0)
+    (extern-lang-close . 0)
+    (extern-lang-open . 0)
+    (friend . 0)
+    (func-decl-cont . +)
+    (incomposition . +)
+    (inexpr-class . +)
+    (inexpr-statement . +)
+    (inextern-lang . +)
+    (inher-cont . c-lineup-multi-inher)
+    (inher-intro . +)
+    ;(inlambda . c-lineup-inexpr-block)
+    (inlambda . 0)
+    (inline-open . +)
+    (inmodule . +)
+    (knr-argdecl . 0)
+    (knr-argdecl-intro . +)
+    (label . 2)
+    (lambda-intro-cont . +)
+    (module-close . 0)
+    (module-open . 0)
+    (namespace-open . 0)
+    (statement-case-open . 0)
+    (string . -1000)
+    (substatement . +)
+    (substatement-label . 2)
+    (substatement-open . 0)
+    (template-args-cont . c-lineup-template-args))))
+
+(add-hook! c-mode-common (c-set-style "RSB"))
+
+(use-package! clang-format
+  :load-path "~/.doom.d/elisp"
+  :init
+  (evil-define-operator bowmacs/evil-indent-clang-format (beg end)
+    "Indent using clang-format"
+    :move-point nil
+    :type line
+    (clang-format-region beg (1- end))))
+
+(map! :after clang-format
+      :map c-mode-base-map
+      :nv "gw" #'bowmacs/evil-indent-clang-format)
+#+end_src
+*** Go
+#+begin_src elisp
+(after! lsp-mode
+  ;; (setq lsp-go-use-gofumpt t)
+  (setq  lsp-go-analyses '((fieldalignment . t)
+                           (nilness . t)
+                           (shadow . t)
+                           (unusedparams . t)
+                           (unusedwrite . t)
+                           (useany . t)
+                           (unusedvariable . t))))
+#+end_src
+
+**** Formatting
+#+begin_src elisp
+(reformatter-define golines-format
+  :program "golines_region.py")
+
+(evil-define-operator bowmacs--golines-format-operator (beg end)
+  "Indent using my custom golines_region.py formatter"
+  :move-point nil
+  :type line
+  (golines-format-region beg (1- end)))
+
+(map! :after go-mode
+      :map go-mode-map
+      :nv "gw" #'bowmacs--golines-format-operator)
+#+end_src
+*** Swift
+NOTE: don't tangle for now, not relevant
+#+begin_src elisp :tangle no
+;; backslash paren does string interpolation in Swift:
+(sp-with-modes '(swift-mode)
+  (sp-local-pair "\\\(" ")"))
+
+(defun swift-format-region (&optional begin end)
+  "Format region using swift-format tool.
+
+Mine is a sh containing:
+${SWIFT_FORMAT} --configuration ~/dev/ff/swift-format.json \"$@\"
+
+Some of this swiped from clang-format."
+  (interactive "r")
+  (let ((indentation-level (save-excursion
+                             (goto-char begin)
+                             (re-search-forward "\s*")
+                             (- (point) begin)))
+        (trailing-newlines (save-excursion ; record how many newlines at end to add back later
+                             (goto-char end)
+                             (abs (skip-chars-backward "\n"))))
+        (temp-buffer (generate-new-buffer "*swift-format-temp*"))
+        (temp-file (make-temp-file "swift-format")))
+    (unwind-protect
+        (let ((status (call-process-region
+                       begin
+                       end
+                       "swift-format"
+                       t                ; delete
+                       `(,temp-buffer ,temp-file)
+                       nil))            ; display
+              (stderr (with-temp-buffer
+                        (unless (zerop (cadr (insert-file-contents temp-file)))
+                          (insert ": "))
+                        (buffer-substring-no-properties
+                         (point-min) (line-end-position)))))
+          (cond
+           ((stringp status)
+            (error "(swift-format killed by signal %s%s)" status stderr))
+           ((not (zerop status))
+            (error "(swift-format failed with code %d%s)" status stderr)))
+
+          ;; if we're here, things are ok
+          (with-current-buffer temp-buffer
+            (indent-code-rigidly (point-min) (point-max) indentation-level)
+            (goto-char (1- (point-max)))
+            (delete-char 1)            ; delete last char, which should be newline
+            (insert-char ?\n trailing-newlines))
+          (insert-buffer temp-buffer))
+      ;; protect forms
+      (delete-file temp-file)
+      (when (buffer-name temp-buffer) (kill-buffer temp-buffer)))))
+
+(evil-define-operator bowmacs/evil-indent-swift-format (beg end)
+  "Indent using swift-format"
+  :move-point nil
+  :type line
+  (swift-format-region beg (1- end)))
+
+(map! :after swift-mode
+      :map swift-mode-map
+      :nv "gw" #'bowmacs/evil-indent-swift-format)
+#+end_src
+*** Python
+**** pyenv fixes
+Doom's pyenv impl does not handle the case when ~.python-version~ contains the
+prefix of an installed version, e.g. ~3.8~ when Python ~3.8.18~ is a pyenv
+installed version.  These changes fix that.
+
+Also, putting this here doesn't seem to work :(
+
+BUT, it seems that we don't really need pyenv anyway?  Having ~.python-version~
+files  is enough.
+
+Keep this for a bit in case something above isn't quite right.
+
+#+begin_src elisp :tangle no
+(defun +python-pyenv-read-version-from-file ()
+  "Read pyenv version from .python-version file."
+  (when-let (root-path (projectile-locate-dominating-file default-directory ".python-version"))
+    (let* ((file-path (expand-file-name ".python-version" root-path))
+           (version
+            (with-temp-buffer
+              (insert-file-contents-literally file-path)
+              (string-trim (buffer-string)))))
+      (if (cl-some (lambda (v) (string-prefix-p version v)) (pyenv-mode-versions)) ; NOTE change here to check for prefix
+          version  ;; return.
+        (message "pyenv: version `%s' is not installed (set by `%s')."
+                 version file-path)))))
+
+;; Change pyenv-mode-versions to add the `--skip-envs` option
+(defun pyenv-mode-versions ()
+  "List installed python versions."
+  (let ((versions (shell-command-to-string "pyenv versions --skip-envs --bare")))
+    (cons "system" (split-string versions))))
+#+end_src
+**** Python config
+#+begin_src elisp
+(after! python
+  (add-hook 'python-mode-hook (lambda ()
+                                ;; this doesn't seem to work with LSP:
+                                (flycheck-mode -1)
+                                ;; This does, maybe?
+                                ;; (setq lsp-diagnostic-package :none)
+                                ))
+
+  ;; Indent multiline parameter lists only 1 indent
+  (setq python-indent-def-block-scale 1)
+
+  ;; pyenv-mode/pyvenv-mode need this to switch venvs
+  (setenv "WORKON_HOME" "~/.pyenv/versions")
+
+  ;; add match and case highlighting
+  (font-lock-add-keywords 'python-mode '(("\\_<\\(?:match\\|case\\)\\_>" 0 font-lock-keyword-face)))
+
+  (setq python-fill-docstring-style 'symmetric))
+
+(use-package! python-black
+  :after python)
+
+(evil-define-operator bowmacs/evil-python-black-region (beg end)
+  "Indent/format using python-black."
+  :move-point nil
+  :type line
+  (python-black-region beg end))
+
+(map! :after python
+      :map python-mode-map
+      :nv "gw" #'bowmacs/evil-python-black-region)
+
+(use-package! ruff-format)
+
+(evil-define-operator bowmacs--evil-ruff-format-region (beg end)
+  "Indent/format using python-black."
+  :move-point nil
+  :type line
+  (ruff-format-region beg end))
+
+;; (map! :after python
+;;       :map python-mode-map
+;;       :nv "gw" #'bowmacs--evil-ruff-format-region)
+
+#+end_src
+**** numpydoc.el
+Use ~numpydoc-generate~ to generate numpy style docstrings.
+#+begin_src elisp
+(use-package! numpydoc
+  :init
+  (setq numpydoc-insertion-style nil
+        numpydoc-insert-examples-block nil
+        numpydoc-template-short "ShortDesc"
+        numpydoc-template-long "LongDesc"
+        numpydoc-template-arg-desc ""
+        numpydoc-template-type-desc ""))
+#+end_src
+**** Python functions
+Not quite right: we want to repeat the below,
+also skip over periods (maybe other stuff?)
+#+begin_src elisp
+(defun bowmacs-mark-python-type ()
+  (interactive)
+  (unless (looking-at "\\_<")
+    (skip-syntax-backward "w_"))
+  (push-mark (save-excursion
+               (evil-forward-word)
+               (when (looking-at "\\[")
+                 (evil-jump-item)
+                 (forward-char 1))
+               (point)))
+  (activate-mark))
+
+(defun bowmacs-make-python-type-optional ()
+  (interactive)
+  (save-excursion
+    (bowmacs-mark-python-type)
+    (insert "Optional[")
+    (exchange-point-and-mark)
+    (insert "]")))
+#+end_src
+
+**** LSP integration with Rust `ruff` linter
+https://github.com/emacs-lsp/lsp-mode/issues/3876#issuecomment-1366887555
+https://github.com/ibizaman/lsp-mode/blob/f94651549591585e7b4303f03ba3c3522d3ce321/clients/lsp-ruff-lsp.el#L92
+https://github.com/jarulsamy/.dotfiles/blob/aa4791443fd9fe96728735a64ba9a67604a93054/.doom.d/config.el#L321
+
+*** Clojure
+#+begin_src elisp
+(defun bowmacs/evil-shell-append ()
+  (interactive)
+  (evil-goto-line)
+  (evil-append-line 0))
+
+(defun bowmacs/evil-shell-insert ()
+  (interactive)
+  (evil-goto-line)
+  (evil-insert-line 0))
+
+(defun bowmacs/clojure-mode-hook ()
+  (modify-syntax-entry ?- "w")
+  (modify-syntax-entry ?\[ "(]" lisp-mode-syntax-table)
+  (modify-syntax-entry ?\] ")[" lisp-mode-syntax-table)
+  (add-to-list 'clojure-align-cond-forms "match"))
+
+(map! :map cider-repl-mode-map
+      :n "A" #'bowmacs/evil-shell-append
+      :n "I" #'bowmacs/evil-shell-insert)
+
+(map! :after cider :map cider-mode-map
+      (:leader
+       "ef" #'cider-eval-defun-at-point
+       "er" #'cider-eval-region
+       "eb" #'cider-eval-buffer
+       "ep" #'cider-pprint-eval-last-sexp-to-repl
+       "ee" #'cider-eval-last-sexp
+
+       "tt" #'cider-test-run-test
+       "tp" #'cider-test-run-project-tests
+       "tn" #'cider-test-run-ns-tests))
+#+end_src
+*** JS / Typescript
+#+begin_src elisp
+;; don't line up dots on continued lines
+(after! js2-mode
+  (setq js-chain-indent nil))
+#+end_src
+
+Run ~prettier~ with Bun:
+#+begin_src elisp
+(after! apheleia
+  (setf (alist-get 'prettier-typescript apheleia-formatters)
+        '("bun" "prettier" "--stdin-filepath" filepath)))
+#+end_src
+*** Elisp
+#+begin_src elisp
+(defun bowmacs-ert-silently ()
+  "Run ert on all tests."
+  (interactive)
+  (ert t))
+
+(map! :map emacs-lisp-mode-map
+      (:leader
+       "et" #'bowmacs-ert-silently))
+#+end_src
+*** Lua
+#+begin_src elisp
+(use-package! lua-mode
+  :config
+  (setq lua-indent-level 4))
+#+end_src
+
+*** Bowmacs AI
+#+begin_src elisp
+(use-package! bowmacs-ai
+  :config
+  (advice-add 'bowmacs-ai-open-with-prompt :after #'evil-insert-state)
+  (bowmacs-ai-define-opener describe-code "Please describe what the following code does:"))
+
+(map! :after bowmacs-ai
+      :leader
+      "l l" #'bowmacs-ai-open
+      "l d" #'bowmacs-ai-open-describe-code)
+#+end_src
+*** Vterm
+Does doom do this automatically?
+#+begin_src elisp
+;(use-package! evil-collection-vterm)
+#+end_src
+*** K8s
+#+begin_src elisp
+(use-package! kubel
+  :if (string= (system-name) "perlence")
+  :after vterm
+  :config
+  (kubel-vterm-setup))
+
+(use-package! kubel-evil
+  :after kubel)
+#+end_src
+*** LSP
+These affect `lsp-ui-doc-glance`:
+#+begin_src elisp
+(after! lsp-ui
+  (setq lsp-ui-doc-max-width 80
+        lsp-ui-doc-max-height 40
+        ;lsp-ui-doc-show-with-cursor t
+        lsp-enable-snippet nil))
+#+end_src
+
+Save files after ~lsp-rename~
+#+begin_src emacs-lisp
+(add-hook 'lsp-after-apply-edits-hook (lambda (&rest _) (save-buffer)))
+#+end_src
+*** vterm
+#+begin_src elisp
+(map! "<f6>" #'+vterm/toggle
+      (:map vterm-mode-map "<f6>" #'+vterm/toggle))
+#+end_src
+*** Scala
+#+begin_src elisp
+(use-package! scala-mode)
+#+end_src
+*** Moonbit
+#+begin_src elisp
+(use-package! moonbit-mode)
+#+end_src
+*** Claude-code
+#+begin_src elisp
+(use-package! claude-code :ensure t
+  :config (claude-code-mode)
+  :bind-keymap ("C-c c" . claude-code-command-map))
+#+end_src
+** General key mapping
+#+begin_src elisp
+(defun bowmacs-consult-line ()
+  (interactive)
+  (consult-line (thing-at-point 'symbol)))
+
+(defun bowmacs-toggle-mode (mode)
+  "Toggle the minor `MODE'."
+  (let ((mode-func (or (get mode 'mode-function) mode)))
+    (funcall mode-func (if (and (boundp mode) (symbol-value mode)) -1 1))))
+
+(defun bowmacs-visual-fill-mode ()
+  "Toggle `visual-fill-column' and `adaptive-fill-mode' together."
+  (interactive)
+  (bowmacs-toggle-mode 'visual-fill-column-mode)
+  (bowmacs-toggle-mode 'adaptive-wrap-prefix-mode))
+
+(map!
+ :nv "gC" #'evilnc-copy-and-comment-lines
+
+ (:after magit
+  :nv "gb" #'magit-blame-addition)
+
+ (:leader
+  "j" #'switch-to-buffer
+  "." #'ace-window
+  "SPC" #'execute-extended-command
+  "sa" #'+default/search-project-for-symbol-at-point
+  "ss" #'bowmacs-consult-line
+  "sp" #'bowmacs--monorepo-project-search  ; previously: +default/search-project
+
+  "tw" #'bowmacs-visual-fill-mode
+  "tq" #'visual-line-mode)
+
+ (:after lsp-mode
+  :nv "gh" #'lsp-ui-doc-glance))
+#+end_src
+
+* Load local.el
+#+begin_src elisp
+(let ((local-file (expand-file-name "local.el" doom-user-dir)))
+  (when (file-exists-p local-file)
+    (load-file local-file)))
+#+end_src
