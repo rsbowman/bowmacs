@@ -395,6 +395,12 @@ Respect ~.envrc~ files when running Python code in a block where the ~:dir~ has 
 
 (advice-add 'org-babel-execute:python :around #'org-babel-refresh-envrc-before-python-block)
 #+end_src
+**** graphviz
+#+begin_src elisp
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ '((dot . t)))
+#+end_src
 *** Lispy
 #+begin_src elisp
 (defvar bowmacs/lispy-mode-map (make-sparse-keymap))
