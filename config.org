@@ -974,7 +974,8 @@ Have lsp-mode suggest the subproject root instead of monorepo root.
   :nv "gh" #'lsp-ui-doc-glance))
 #+end_src
 
-* Load local.el
+** Load local.el
+Per-machine config, for work stuff, email address & username, etc.
 #+begin_src elisp
 (let ((local-file (expand-file-name "local.el" doom-user-dir)))
   (when (file-exists-p local-file)
