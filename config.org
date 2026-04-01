@@ -775,31 +775,6 @@ Use ~numpydoc-generate~ to generate numpy style docstrings.
         numpydoc-template-arg-desc ""
         numpydoc-template-type-desc ""))
 #+end_src
-**** Python functions
-Not quite right: we want to repeat the below,
-also skip over periods (maybe other stuff?)
-#+begin_src elisp
-(defun bowmacs-mark-python-type ()
-  (interactive)
-  (unless (looking-at "\\_<")
-    (skip-syntax-backward "w_"))
-  (push-mark (save-excursion
-               (evil-forward-word)
-               (when (looking-at "\\[")
-                 (evil-jump-item)
-                 (forward-char 1))
-               (point)))
-  (activate-mark))
-
-(defun bowmacs-make-python-type-optional ()
-  (interactive)
-  (save-excursion
-    (bowmacs-mark-python-type)
-    (insert "Optional[")
-    (exchange-point-and-mark)
-    (insert "]")))
-#+end_src
-
 **** LSP integration with Rust `ruff` linter
 https://github.com/emacs-lsp/lsp-mode/issues/3876#issuecomment-1366887555
 https://github.com/ibizaman/lsp-mode/blob/f94651549591585e7b4303f03ba3c3522d3ce321/clients/lsp-ruff-lsp.el#L92
