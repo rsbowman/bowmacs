@@ -201,28 +201,6 @@ See https://karthinks.com/software/avy-can-do-anything for great avy tips
 (add-hook! (clojure-mode scheme-mode emacs-lisp-mode)
   (modify-syntax-entry ?- "w"))
 
-;; Use hippie-expand for evil-complete-next, C-n in insert mode
-(setq hippie-expand-try-functions-list
-      '(try-expand-dabbrev
-        try-expand-dabbrev-all-buffers
-        try-expand-dabbrev-from-kill
-        try-complete-file-name-partially
-        try-complete-file-name
-        try-expand-all-abbrevs
-        try-expand-list
-        try-expand-line
-        try-complete-lisp-symbol-partially
-        try-complete-lisp-symbol))
-(setq evil-complete-next-func #'hippie-expand)
-
-;; Have hippie-expand/dabbrev respect capitalization, useful for CamelCaps identifiers.
-;; see https://stackoverflow.com/questions/8722301/force-hippie-expand-to-respect-capitalization
-(defadvice hippie-expand (around hippie-expand-case-fold)
-  "Try to do case-sensitive matching (not effective with all functions)."
-  (let ((case-fold-search nil))
-    ad-do-it))
-(ad-activate 'hippie-expand)
-
 (after! hl-todo
   (add-to-list 'hl-todo-keyword-faces '("RSB" error bold)))
 #+end_src
