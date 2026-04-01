@@ -904,6 +904,19 @@ Work around a bug related to apheleia somehow, when using `+format/region-or-buf
       "c f" #'bowmacs--lsp-format-dwim)
 
 #+end_src
+**** Project root for monorepos
+Have lsp-mode suggest the subproject root instead of monorepo root.
+#+begin_src elisp
+(defun bowmacs--lsp-suggest-project-root (advised-fn)
+  "Find subproject root by monorepo specific markers."
+  (or
+   (locate-dominating-file default-directory "project.json")
+   (locate-dominating-file default-directory "pyproject.toml")
+   (funcall advised-fn)))
+
+(after! lsp-mode
+  (advice-add 'lsp--suggest-project-root :around #'bowmacs--lsp-suggest-project-root))
+#+end_src
 *** vterm
 #+begin_src elisp
 (map! "<f6>" #'+vterm/toggle
