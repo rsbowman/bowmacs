@@ -212,6 +212,12 @@ Anzu should be included from Doom's modeline, but it doesn't seem to be working,
 (use-package! evil-anzu
   :config (global-anzu-mode +1))
 #+end_src
+*** corfu/cape/dabbrev completion
+#+begin_src elisp
+(setq dabbrev-case-fold-search nil)    ; Case-sensitive search
+(setq dabbrev-case-replace nil)        ; Don't adjust case of expansions
+(setq cape-dabbrev-buffer-function #'cape-text-buffers) ; use completions from other buffers
+#+end_src
 *** wgrep
 From https://blog.binchen.org/posts/use-wgrep-and-evil-to-replace-text-efficiently.html
 #+begin_src elisp
