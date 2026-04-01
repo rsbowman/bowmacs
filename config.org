@@ -887,6 +887,23 @@ Save files after ~lsp-rename~
 #+begin_src emacs-lisp
 (add-hook 'lsp-after-apply-edits-hook (lambda (&rest _) (save-buffer)))
 #+end_src
+
+**** Formatting bug
+Work around a bug related to apheleia somehow, when using `+format/region-or-buffer` a "File to save to:" prompt appears.  Instead, call `lsp-format-buffer` directly when possible.
+#+begin_src emacs-lisp 
+(defun bowmacs--lsp-format-dwim ()
+  "Format buffer or region using LSP directly, bypassing apheleia."
+  (interactive)
+  (if (and (bound-and-true-p lsp-mode) (lsp-feature? "textDocument/formatting"))
+      (call-interactively #'lsp-format-buffer)
+    (+format/region-or-buffer)))
+
+(map! :after format
+      :leader
+      :desc "Format buffer/region"
+      "c f" #'bowmacs--lsp-format-dwim)
+
+#+end_src
 *** vterm
 #+begin_src elisp
 (map! "<f6>" #'+vterm/toggle
