@@ -267,6 +267,12 @@ Determine project root by finding `project.json' file."
       (user-error "Could not find project root with project.json!"))
     (+vertico-file-search :in root)))
 #+end_src
+*** Projectile
+Turn off file cache, it's often out of date
+#+begin_src elisp
+(after! projectile
+  (setq projectile-enable-caching nil))
+#+end_src
 ** Magit / Git
 #+begin_src elisp
 (defun bowmacs--first-tag-containing-commit ()
