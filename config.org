@@ -129,6 +129,34 @@ lsp-mode seems to use all-the-icons
 #+end_src
 
 #+end_src
+*** Popup buffer sizes
+Don't change popup buffer heights (like grep-mode buffers from embark export) when visiting links.
+
+#+begin_src elisp
+(after! popup
+  (defadvice! bowmacs--preserve-popup-size-a (fn &rest args)
+    "Prevent popup windows from being resized when following compilation links."
+    :around #'compilation-goto-locus
+    (let* ((popup-windows (cl-remove-if-not #'+popup-window-p (window-list)))
+           (popup-heights (mapcar (lambda (w) (cons w (window-height w)))
+                                  popup-windows)))
+      (prog1 (apply fn args)
+        (dolist (pair popup-heights)
+          (let ((window (car pair))
+                (height (cdr pair)))
+            (when (and (window-live-p window)
+                       (/= (window-height window) height))
+              (ignore-errors
+                (window-resize window (- height (window-height window)))))))))))
+#+end_src
+
+This also works, but doesn't let you resize even manually:
+#+begin_src elisp :tangle no
+(add-hook '+popup-buffer-mode-hook
+          (lambda ()
+            (setq-local window-size-fixed 'height)))
+#+end_src
+
 ** Avy
 See https://karthinks.com/software/avy-can-do-anything for great avy tips
 #+begin_src elisp
